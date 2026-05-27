@@ -1,37 +1,38 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import os
 
-# Configuração global da página do navegador (Título, Ícone e Layout expandido)
+# Configuração global da página do navegador
 st.set_page_config(
     page_title="Muay Thai Analytics",
     page_icon="🥊",
     layout="wide"
 )
 
-# Carregamento dos arquivos de dados CSV estruturados no projeto
+# Carregamento dos arquivos de dados CSV
 df_lutadores = pd.read_csv("Lutador.csv")
 df_golpes = pd.read_csv("Golpe.csv")
 
-# Exibição do cabeçalho principal da página web com títulos informativos
+# Exibição do cabeçalho principal
 st.title("🥊 Muay Thai Analytics: Tawanchai vs Superbon")
 st.markdown("Análise estatística detalhada da super luta realizada entre Tawanchai vs Superbon no **ONE Friday Fights 46**.")
 st.write("---") 
 
-# Exibição do resultado oficial da luta em destaque na página
+# Exibição do resultado oficial da luta
 st.success("""
     🏆 **Resultado Oficial:** **Tawanchai PK.Saenchai** venceu **Superbon Singha Mawynn** por **Decisão Unânime (UD)** após 5 rounds intensos, mantendo o cinturão mundial Peso-Pena de Muay Thai do ONE Championship!
 """)
 st.write("")
 
-# Criação de seções expansíveis para verificação e auditoria dos dados brutos
+# Criação de seções expansíveis para dados brutos
 with st.expander("👀 Clique aqui para inspecionar os dados brutos de Lutadores"):
     st.dataframe(df_lutadores)
 
 with st.expander("📊 Clique aqui para inspecionar os dados brutos de Golpes"):
     st.dataframe(df_golpes)
 
-# Construção dos componentes de seleção de filtros na barra lateral esquerda
+# Construção dos componentes de seleção de filtros na barra lateral
 st.sidebar.header("🔍 Filtros de Análise")
 
 opcao_lutador = st.sidebar.selectbox(
@@ -49,7 +50,7 @@ opcao_alvo = st.sidebar.selectbox(
     ["Todos", "Corpo", "Cabeça", "Perna"]
 )
 
-# Processamento da lógica de filtragem sequencial (funil de dados) com base nas escolhas
+# Lógica de filtragem
 df_filtrado = df_golpes.copy()
 
 if opcao_lutador == "Tawanchai":
@@ -63,12 +64,12 @@ if opcao_golpe != "Todos":
 if opcao_alvo != "Todos":
     df_filtrado = df_filtrado[df_filtrado["Alvo"] == opcao_alvo]
 
-# Engenharia de atributos: Criação matemática da coluna de eficácia com tratamento de erros
+# Engenharia de atributos (Eficácia)
 df_filtrado["Eficacia (%)"] = (df_filtrado["Conectado"] / df_filtrado["Lancado"] * 100).round(1)
 df_filtrado["Eficacia (%)"] = df_filtrado["Eficacia (%)"].fillna(0.0)
 
 
-# Função explicativa: Calcula as métricas somadas isolando o ID de um lutador específico
+# Função para calcular as métricas de cada lutador
 def calcular_metricas_lutador(dados, id_lutador):
     df_lut = dados[dados["ID_Lutador"] == id_lutador]
     lancados = int(df_lut["Lancado"].sum())
@@ -77,153 +78,144 @@ def calcular_metricas_lutador(dados, id_lutador):
     return lancados, conectados, eficacia
 
 
-# Bloco explicativo: Renderiza cartões de métricas (KPIs) totalmente identificados na interface
+# Função inteligente para encontrar a imagem independente da extensão (.jpg ou .png)
+def obter_caminho_imagem(nome_base):
+    if os.path.exists(f"{nome_base}.jpg"):
+        return f"{nome_base}.jpg"
+    elif os.path.exists(f"{nome_base}.png"):
+        return f"{nome_base}.png"
+    return None
+
+
+foto_tawanchai = obter_caminho_imagem("tawanchai")
+foto_superbon = obter_caminho_imagem("superbon")
+
+
+# RENDERIZAÇÃO DOS CARDS DE MÉTRICAS
 if opcao_lutador == "Tawanchai":
     lan, con, ef = calcular_metricas_lutador(df_filtrado, 1)
-    c1, c2, c3 = st.columns(3)
-    with c1: st.metric(label="Golpes Lançados (Tawanchai)", value=lan)
-    with c2: st.metric(label="Golpes Conectados (Tawanchai)", value=con)
-    with c3: st.metric(label="Precisão Geral (Tawanchai)", value=f"{ef}%")
+    with st.container(border=True):
+        st.markdown("#### 🔴 👑 Tawanchai (Vencedor)")
+        foto_col, dados_col = st.columns([1, 4])
+        with foto_col:
+            if foto_tawanchai:
+                st.image(foto_tawanchai, use_container_width=True)
+            else:
+                st.info("📷 Foto (tawanchai.jpg/.png) não encontrada.")
+        with dados_col:
+            c1, c2, c3 = st.columns(3)
+            with c1: st.metric(label="Golpes Lançados", value=lan)
+            with c2: st.metric(label="Golpes Conectados", value=con)
+            with c3: st.metric(label="Precisão Geral", value=f"{ef}%")
 
 elif opcao_lutador == "Superbon":
     lan, con, ef = calcular_metricas_lutador(df_filtrado, 2)
-    c1, c2, c3 = st.columns(3)
-    with c1: st.metric(label="Golpes Lançados (Superbon)", value=lan)
-    with c2: st.metric(label="Golpes Conectados (Superbon)", value=con)
-    with c3: st.metric(label="Precisão Geral (Superbon)", value=f"{ef}%")
+    with st.container(border=True):
+        st.markdown("#### 🔵 🥊 Superbon (Desafiante)")
+        foto_col, dados_col = st.columns([1, 4])
+        with foto_col:
+            if foto_superbon:
+                st.image(foto_superbon, use_container_width=True)
+            else:
+                st.info("📷 Foto (superbon.jpg/.png) não encontrada.")
+        with dados_col:
+            c1, c2, c3 = st.columns(3)
+            with c1: st.metric(label="Golpes Lançados", value=lan)
+            with c2: st.metric(label="Golpes Conectados", value=con)
+            with c3: st.metric(label="Precisão Geral", value=f"{ef}%")
 
 else:
-    # Busca os dados consolidados de ambos os lutadores
     lan1, con1, ef1 = calcular_metricas_lutador(df_filtrado, 1)
     lan2, con2, ef2 = calcular_metricas_lutador(df_filtrado, 2)
     
-    # ATENÇÃO: Agora apontamos para os arquivos locais (coloque a extensão correta: .png ou .jpg)
-    foto_tawanchai = "tawanchai.jpg" 
-    foto_superbon = "superbon.jpg"
-    
-    # Criamos as duas colunas principais do confronto
     col_tawanchai, col_superbon = st.columns(2)
     
-    # --- CARD TAWANCHAI (VENCEDOR) ---
     with col_tawanchai:
-        st.markdown("#### 🔴 👑 Tawanchai (Vencedor)")
-        foto_col, dados_col = st.columns([1, 2])
-        
-        with foto_col:
-            # Renderiza o arquivo de imagem local
-            st.image(foto_tawanchai, use_container_width=True)
+        with st.container(border=True):
+            st.markdown("#### 🔴 👑 Tawanchai (Vencedor)")
+            foto_col, dados_col = st.columns([1, 2])
+            with foto_col:
+                if foto_tawanchai:
+                    st.image(foto_tawanchai, use_container_width=True)
+                else:
+                    st.info("📷 Foto não encontrada.")
+            with dados_col:
+                st.metric(label="Lançados", value=lan1)
+                st.metric(label="Conectados", value=con1)
+                st.metric(label="Precisão", value=f"{ef1}%")
             
-        with dados_col:
-            st.metric(label="Lançados", value=lan1)
-            st.metric(label="Conectados", value=con1)
-            st.metric(label="Precisão", value=f"{ef1}%")
-            
-    # --- CARD SUPERBON (DESAFIANTE) ---
     with col_superbon:
-        st.markdown("#### 🔵 🥊 Superbon (Desafiante)")
-        foto_col, dados_col = st.columns([1, 2])
-        
-        with foto_col:
-            st.image(foto_superbon, use_container_width=True)
-            
-        with dados_col:
-            st.metric(label="Lançados", value=lan2)
-            st.metric(label="Conectados", value=con2)
-            st.metric(label="Precisão", value=f"{ef2}%")
+        with st.container(border=True):
+            st.markdown("#### 🔵 🥊 Superbon (Desafiante)")
+            foto_col, dados_col = st.columns([1, 2])
+            with foto_col:
+                if foto_superbon:
+                    st.image(foto_superbon, use_container_width=True)
+                else:
+                    st.info("📷 Foto não encontrada.")
+            with dados_col:
+                st.metric(label="Lançados", value=lan2)
+                st.metric(label="Conectados", value=con2)
+                st.metric(label="Precisão", value=f"{ef2}%")
 
 st.write("---")
 
-# Renderização do título dinâmico e exibição da tabela final resumida e estilizada
+# Renderização da Tabela Estilizada
 st.subheader(f"📊 Análise: {opcao_lutador} ➔ {opcao_golpe} ➔ {opcao_alvo}")
-
 colunas_limpas = ["Round", "Tipo_Golpe", "Alvo", "Lado", "Lancado", "Conectado", "Eficacia (%)"]
 
 if not df_filtrado.empty:
-    # Aplica a cor de fundo, texto e formata a coluna de eficácia com 1 casa decimal e símbolo %
     tabela_estilizada = (df_filtrado[colunas_limpas].style
         .set_properties(**{
             'background-color': '#1E2235',
             'color': '#FFFFFF',
             'border-color': '#2D3250'
         })
-        .format({'Eficacia (%)': '{:.1f}%'}) # Força o Pandas a mostrar apenas 1 casa decimal + %
+        .format({'Eficacia (%)': '{:.1f}%'})
     )
     st.dataframe(tabela_estilizada, use_container_width=True)
 else:
     st.warning("Nenhum golpe encontrado para essa combinação de filtros! 🥊")
 
-# Verificação se existem dados para gerar o gráfico de barras por Alvo
-if not df_filtrado.empty:
-    st.write("### 🎯 Distribuição de Golpes por Alvo")
-    
-    df_grafico_alvo = df_filtrado.groupby("Alvo")["Conectado"].sum().reset_index()
-    cores_alvo = {"Cabeça": "#EF553B", "Corpo": "#636EFA", "Perna": "#00CC96"}
-    
-    fig_alvo = px.bar(
-        df_grafico_alvo, 
-        x="Alvo", 
-        y="Conectado",
-        labels={"Conectado": "Golpes Conectados"},
-        color="Alvo",
-        color_discrete_map=cores_alvo,
-        template="plotly_dark"
-    )
-    
-    # Customização do layout para remover fundos cinzas e tornar transparente
-    fig_alvo.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font_color="#FFFFFF",
-        yaxis=dict(showgrid=True, gridcolor='#2D3250'),
-        xaxis=dict(showgrid=False)
-    )
-    
-    st.plotly_chart(fig_alvo, use_container_width=True)
 
-# Verificação se existem dados para gerar a análise de intensidade por round
-if not df_filtrado.empty:
-    st.write("### 🥊 Intensidade e Desgaste: Lançados vs Conectados por Round")
-    
-    df_energia = df_filtrado.groupby(["Round", "ID_Lutador"])[["Lancado", "Conectado"]].sum().reset_index()
-    
-    mapeamento_nomes = {1: "Tawanchai", 2: "Superbon"}
-    df_energia["Lutador"] = df_energia["ID_Lutador"].map(mapeamento_nomes)
-    
-    df_melted = pd.melt(
-        df_energia, 
-        id_vars=["Round", "Lutador"], 
-        value_vars=["Lancado", "Conectado"],
-        var_name="Status do Golpe", 
-        value_name="Quantidade"
-    )
-    
-    df_melted["Lutador_Status"] = df_melted["Lutador"] + " - " + df_melted["Status do Golpe"]
-    
-    cores_customizadas = {
-        "Tawanchai - Lancado": "#EF553B",    
-        "Tawanchai - Conectado": "#FAC5BB",  
-        "Superbon - Lancado": "#636EFA",      
-        "Superbon - Conectado": "#CCD1FF"     
-    }
-    
-    fig_intensidade = px.bar(
-        df_melted,
-        x="Round",
-        y="Quantidade",
-        color="Lutador_Status",
-        barmode="group",
-        color_discrete_map=cores_customizadas,
-        labels={"Quantidade": "Total de Golpes", "Round": "Número do Round", "Lutador_Status": "Legenda"},
-        template="plotly_dark"
-    )
-    
-    # Customização do layout do segundo gráfico para transparência total
-    fig_intensidade.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font_color="#FFFFFF",
-        xaxis=dict(tickmode="linear", tick0=1, dtick=1, showgrid=False),
-        yaxis=dict(showgrid=True, gridcolor='#2D3250')
-    )
-    
-    st.plotly_chart(fig_intensidade, use_container_width=True)
+# --- SEÇÃO DE GRÁFICOS LADO A LADO EM CONTAINERS ---
+st.write("---")
+st.write("### 📊 Análise Gráfica Avançada")
+
+col_grafico1, col_grafico2 = st.columns(2)
+
+# Gráfico 1: Alvos
+with col_grafico1:
+    if not df_filtrado.empty:
+        with st.container(border=True):
+            st.write("##### 🎯 Distribuição de Golpes por Alvo")
+            df_grafico_alvo = df_filtrado.groupby("Alvo")["Conectado"].sum().reset_index()
+            cores_alvo = {"Cabeça": "#EF553B", "Corpo": "#636EFA", "Perna": "#00CC96"}
+            
+            fig_alvo = px.bar(df_grafico_alvo, x="Alvo", y="Conectado", color="Alvo",
+                              color_discrete_map=cores_alvo, template="plotly_dark")
+            
+            fig_alvo.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                                   font_color="#FFFFFF", yaxis=dict(showgrid=True, gridcolor='#2D3250'), xaxis=dict(showgrid=False))
+            st.plotly_chart(fig_alvo, use_container_width=True)
+
+# Gráfico 2: Rounds
+with col_grafico2:
+    if not df_filtrado.empty:
+        with st.container(border=True):
+            st.write("##### 🥊 Lançados vs Conectados por Round")
+            df_energia = df_filtrado.groupby(["Round", "ID_Lutador"])[["Lancado", "Conectado"]].sum().reset_index()
+            df_energia["Lutador"] = df_energia["ID_Lutador"].map({1: "Tawanchai", 2: "Superbon"})
+            df_melted = pd.melt(df_energia, id_vars=["Round", "Lutador"], value_vars=["Lancado", "Conectado"],
+                                var_name="Status do Golpe", value_name="Quantidade")
+            df_melted["Lutador_Status"] = df_melted["Lutador"] + " - " + df_melted["Status do Golpe"]
+            
+            cores_customizadas = {"Tawanchai - Lancado": "#EF553B", "Tawanchai - Conectado": "#FAC5BB",  
+                                  "Superbon - Lancado": "#636EFA", "Superbon - Conectado": "#CCD1FF"}
+            
+            fig_intensidade = px.bar(df_melted, x="Round", y="Quantidade", color="Lutador_Status", barmode="group",
+                                     color_discrete_map=cores_customizadas, template="plotly_dark")
+            
+            fig_intensidade.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color="#FFFFFF",
+                                           xaxis=dict(tickmode="linear", tick0=1, dtick=1, showgrid=False), yaxis=dict(showgrid=True, gridcolor='#2D3250'))
+            st.plotly_chart(fig_intensidade, use_container_width=True)
