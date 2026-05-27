@@ -93,21 +93,43 @@ elif opcao_lutador == "Superbon":
     with c3: st.metric(label="Precisão Geral (Superbon)", value=f"{ef}%")
 
 else:
+    # Busca os dados consolidados de ambos os lutadores
     lan1, con1, ef1 = calcular_metricas_lutador(df_filtrado, 1)
     lan2, con2, ef2 = calcular_metricas_lutador(df_filtrado, 2)
     
+    # ATENÇÃO: Agora apontamos para os arquivos locais (coloque a extensão correta: .png ou .jpg)
+    foto_tawanchai = "tawanchai.jpg" 
+    foto_superbon = "superbon.jpg"
+    
+    # Criamos as duas colunas principais do confronto
     col_tawanchai, col_superbon = st.columns(2)
+    
+    # --- CARD TAWANCHAI (VENCEDOR) ---
     with col_tawanchai:
         st.markdown("#### 🔴 👑 Tawanchai (Vencedor)")
-        st.metric(label="Lançados", value=lan1)
-        st.metric(label="Conectados", value=con1)
-        st.metric(label="Precisão", value=f"{ef1}%")
+        foto_col, dados_col = st.columns([1, 2])
         
+        with foto_col:
+            # Renderiza o arquivo de imagem local
+            st.image(foto_tawanchai, use_container_width=True)
+            
+        with dados_col:
+            st.metric(label="Lançados", value=lan1)
+            st.metric(label="Conectados", value=con1)
+            st.metric(label="Precisão", value=f"{ef1}%")
+            
+    # --- CARD SUPERBON (DESAFIANTE) ---
     with col_superbon:
         st.markdown("#### 🔵 🥊 Superbon (Desafiante)")
-        st.metric(label="Lançados", value=lan2)
-        st.metric(label="Conectados", value=con2)
-        st.metric(label="Precisão", value=f"{ef2}%")
+        foto_col, dados_col = st.columns([1, 2])
+        
+        with foto_col:
+            st.image(foto_superbon, use_container_width=True)
+            
+        with dados_col:
+            st.metric(label="Lançados", value=lan2)
+            st.metric(label="Conectados", value=con2)
+            st.metric(label="Precisão", value=f"{ef2}%")
 
 st.write("---")
 
